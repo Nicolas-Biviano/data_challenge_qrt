@@ -1,0 +1,39 @@
+# Data
+data/
+*.csv
+*.parquet
+*.feather
+*.h5
+*.pkl
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb_checkpoints
+
+# Runs & outputs
+runs/
+figures/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Credentials
+.env
+*.key

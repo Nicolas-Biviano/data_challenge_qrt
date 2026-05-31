@@ -60,6 +60,14 @@ class CVresults:
 
     def get_fold_results(self, i:int):
         return self.fold_results[i]
+    
+    def score(self, penalty: float = 1.0) -> float:
+        acc_by_date = self.oof_results.groupby("TS")["is_correct"].mean()
+        mean = acc_by_date.mean()
+        std = acc_by_date.std()
+        score = mean - penalty * std
+        print(f"mean={mean:.4f}  std={std:.4f}  score(penalty={penalty})={score:.4f}")
+        return score
 
 @dataclass
 class FoldResults:
@@ -189,19 +197,22 @@ def _check_data(X, y):
     assert X.index.equals(y.index), "X and y do not share the same index"
     assert (Cols.TARGET.value in y.columns) and (Cols.TARGET_BIN.value in y.columns), f"y columns are incorrect {y.columns}"
     assert Cols.DATE.value in X.columns, "X has no date column"
-
+    
 def _preprocess_fold_data(X_train_fold, X_test_fold, model_config):
     
-    if model_config.preprocessing is not None:
-        X_train_ready, X_test_ready = model_config.preprocessing(X_train_fold, X_test_fold)
-    else:
-        X_train_ready, X_test_ready = X_train_fold.copy(), X_test_fold.copy()
-
+    # Sélection features d'abord pour éviter de passer des strings au preprocessing
     if model_config.features is not None:
-        return X_train_ready[model_config.features], X_test_ready[model_config.features]
+        X_train_fold = X_train_fold[model_config.features]
+        X_test_fold = X_test_fold[model_config.features]
     else:
-        drop_cols = [Cols.ALLOCATION.value, Cols.DATE.value, Cols.GROUP.value]
-        return X_train_ready.drop(columns=drop_cols), X_test_ready.drop(columns=drop_cols)
+        drop_cols = [c for c in [Cols.ALLOCATION.value, Cols.DATE.value, Cols.GROUP.value] if c in X_train_fold.columns]
+        X_train_fold = X_train_fold.drop(columns=drop_cols)
+        X_test_fold = X_test_fold.drop(columns=drop_cols)
+
+    if model_config.preprocessing is not None:
+        X_train_fold, X_test_fold = model_config.preprocessing(X_train_fold, X_test_fold)
+
+    return X_train_fold, X_test_fold
 
 def _fit_model_and_predict(X_train_ready, X_test_ready, y_train_ready, model_config):
     local_model = clone(model_config.model)

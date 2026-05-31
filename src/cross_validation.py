@@ -36,10 +36,10 @@ from sklearn.metrics import (
 
 @dataclass
 class ModelConfig:
-    features:list|None = None 
     model:Any
-    preprocessing:Any
     regression:bool
+    features:list|None = None 
+    preprocessing:Any|None = None 
     threshold_classification:float=0.5
     threshold_regression:float=0
 
@@ -54,7 +54,7 @@ class CVconfig:
 @dataclass
 class CVresults:
     n_folds:int 
-    oof_results: pd.DataFrame = field(default_factory=lambda: pd.DataFrame())
+    oof_results: pd.DataFrame 
     fold_results:list
     mean_accuracy: float = np.nan
 
@@ -79,7 +79,7 @@ class FoldResults:
 
 #### Main function ####
 
-def run_cv(X, y, model_config=None, cv_config=None):
+def run_cv(X, y, model_config, cv_config=None):
 
     if cv_config is None:
         cv_config = CVconfig()  
@@ -101,7 +101,10 @@ def run_cv(X, y, model_config=None, cv_config=None):
     oof_results = pd.DataFrame(
         {
             "fold": np.nan, 
+            "TS": None,
+            "ALLOCATION": None,
             "y_true": np.nan, 
+            "y_true_binarized": np.nan, 
             "score": np.nan, 
             "prediction": np.nan,
             "is_correct": np.nan,
@@ -111,8 +114,8 @@ def run_cv(X, y, model_config=None, cv_config=None):
 
     fold_results = []
 
-    tgt = Cols.TARGET
-    tgt_bin = Cols.TARGET_BIN
+    tgt = Cols.TARGET.value
+    tgt_bin = Cols.TARGET_BIN.value
 
     for fold_id, (train_date_idx, valid_date_idx) in enumerate(splitter.split(unique_ts), start=1):
 
@@ -133,8 +136,8 @@ def run_cv(X, y, model_config=None, cv_config=None):
         if model_config.regression:
             y_binary_train = (y_score_train > model_config.threshold_regression).astype(int)
             y_binary_test = (y_score_test > model_config.threshold_regression).astype(int)
-            train_metrics = _score_model_regression(y_train_fold[tgt], y_score_train) | _score_model_classification(y_train_fold[tgt_bin], y_score_train)
-            valid_metrics = _score_model_regression(y_test_fold[tgt], y_score_test) | _score_model_classification(y_test_fold[tgt_bin], y_score_test)
+            train_metrics = _score_model_regression(y_train_fold[tgt], y_score_train) | _score_model_classification(y_train_fold[tgt_bin], y_binary_train)
+            valid_metrics = _score_model_regression(y_test_fold[tgt], y_score_test) | _score_model_classification(y_test_fold[tgt_bin], y_binary_test)
         else: 
             y_binary_train = (y_score_train > model_config.threshold_classification).astype(int)
             y_binary_test = (y_score_test > model_config.threshold_classification).astype(int)
@@ -160,13 +163,16 @@ def run_cv(X, y, model_config=None, cv_config=None):
         fold_results.append(fold_result)
 
         oof_results.loc[valid_mask, "fold"] = fold_id
-        oof_results.loc[valid_mask, "y_true"] = y_test_fold
+        oof_results.loc[valid_mask, "TS"] = X_test_fold[Cols.DATE.value].values
+        oof_results.loc[valid_mask, "ALLOCATION"] = X_test_fold[Cols.ALLOCATION.value].values
+        oof_results.loc[valid_mask, "y_true"] = y_test_fold[tgt]
+        oof_results.loc[valid_mask, "y_true_binarized"] = y_test_fold[tgt_bin]
         oof_results.loc[valid_mask, "score"] = y_score_test
         oof_results.loc[valid_mask, "prediction"] = y_binary_test
         
         logger.info(f"Fold accuracy={valid_metrics['accuracy']:.2f}")
 
-    oof_results["is_correct"] = (oof_results["prediction"] == oof_results["y_true"]).astype(int)
+    oof_results["is_correct"] = (oof_results["prediction"] == oof_results["y_true_binarized"]).astype(int)
 
     output = CVresults(
         n_folds=cv_config.n_splits,
@@ -185,15 +191,17 @@ def _check_data(X, y):
     assert Cols.DATE.value in X.columns, "X has no date column"
 
 def _preprocess_fold_data(X_train_fold, X_test_fold, model_config):
-    features = None if model_config.features is None else model_config.features
     
     if model_config.preprocessing is not None:
         X_train_ready, X_test_ready = model_config.preprocessing(X_train_fold, X_test_fold)
+    else:
+        X_train_ready, X_test_ready = X_train_fold.copy(), X_test_fold.copy()
 
-    X_train_ready = X_train_ready[features]
-    X_test_ready = X_test_ready[features]
-
-    return X_train_ready, X_test_ready
+    if model_config.features is not None:
+        return X_train_ready[model_config.features], X_test_ready[model_config.features]
+    else:
+        drop_cols = [Cols.ALLOCATION.value, Cols.DATE.value, Cols.GROUP.value]
+        return X_train_ready.drop(columns=drop_cols), X_test_ready.drop(columns=drop_cols)
 
 def _fit_model_and_predict(X_train_ready, X_test_ready, y_train_ready, model_config):
     local_model = clone(model_config.model)

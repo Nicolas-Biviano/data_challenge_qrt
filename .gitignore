@@ -25,6 +25,8 @@ env/
 runs/
 figures/
 *.log
+mlflow.db
+mlruns/
 
 # OS
 .DS_Store

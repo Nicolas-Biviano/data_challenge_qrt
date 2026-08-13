@@ -1,26 +1,24 @@
-# Notebooks à présenter
+# Presentation notebooks
 
-Ce dossier constitue le parcours court du projet. Les notebooks sont
-pré-exécutés et se lisent dans l'ordre suivant :
+This directory contains the short, reproducible presentation path for the
+project:
 
-1. `00_eda.ipynb` — structure des données, signal naïf, stabilité par date et
-   allocation, et différences train/test ;
-2. `01_baseline_v2.ipynb` — modèle logistique V2 retenu, validation groupée par
-   dates, stabilité et importance des variables ;
-3. `02_research_summary.ipynb` — synthèse des hypothèses testées, résultats
-   robustes, pistes rejetées et limites de la validation locale.
+1. `00_eda.ipynb` — data integrity, panel coverage, missing values, target
+   heterogeneity, short-lag dynamics, conditional signal and train/test drift;
+2. `01_retained_model.ipynb` — the retained sparse logistic pipeline,
+   date-grouped validation, stability and feature contributions;
+3. `02_qrt_baseline_vs_first_model.ipynb` — a paired comparison between the
+   Ridge benchmark supplied by QRT and our first Ridge model.
 
-## Lecture et réexécution
+## Reproduction
 
-Les trois notebooks sont enregistrés avec leurs sorties et peuvent donc être
-lus directement sur GitHub ou dans Jupyter. Ils cherchent automatiquement la
-racine du dépôt et peuvent être lancés depuis la racine ou depuis ce dossier.
+The notebooks are stored with their outputs and can be read directly on GitHub
+or in Jupyter. They locate the repository root automatically, so they can be
+executed from the root directory or from `notebooks/`.
 
-Une réexécution complète nécessite les CSV du challenge dans `data/`. Les deux
-notebooks de modélisation utilisent également les artefacts de recherche locaux
-conservés dans `gpt/outputs/`, qui ne sont pas versionnés. Le pipeline canonique
-de la baseline est défini dans `src/models.py` et la validation groupée dans
+A complete execution requires the challenge CSV files in `data/`. Model
+preprocessing is defined in `src/models.py` and date-grouped validation in
 `src/cross_validation.py`.
 
-Les anciens notebooks de travail ne font pas partie du parcours présenté. Ils
-sont conservés localement sous `archive/notebooks/`, dossier ignoré par Git.
+Earlier exploratory notebooks and the original QRT submission notebook are
+kept locally under `archive/notebooks/`, which is excluded from Git.

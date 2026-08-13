@@ -28,6 +28,9 @@ figures/
 mlflow.db
 mlruns/
 
+# Local research archive
+archive/
+
 # OS
 .DS_Store
 Thumbs.db

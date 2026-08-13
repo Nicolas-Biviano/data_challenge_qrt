@@ -2,11 +2,13 @@ import numpy as np
 import pandas as pd
 import pytest
 from sklearn.base import clone
+from sklearn.compose import ColumnTransformer
 
 from src.models import (
     MODEL_FEATURES,
-    FixedEffectDesign,
+    AllocationReturnInteraction,
     make_baseline_v2,
+    make_fixed_effect_preprocessor,
 )
 
 
@@ -28,12 +30,13 @@ def model_frame():
     )
 
 
-def test_fixed_effect_design_is_cloneable_and_sparse(model_frame):
-    design = clone(FixedEffectDesign()).fit(model_frame)
-    matrix = design.transform(model_frame)
+def test_fixed_effect_preprocessor_is_cloneable_and_sparse(model_frame):
+    preprocessor = clone(make_fixed_effect_preprocessor()).fit(model_frame)
+    matrix = preprocessor.transform(model_frame)
 
+    assert isinstance(preprocessor, ColumnTransformer)
     assert matrix.shape[0] == len(model_frame)
-    assert matrix.shape[1] == len(design.get_feature_names_out())
+    assert matrix.shape[1] == len(preprocessor.get_feature_names_out())
     assert np.isfinite(matrix.data).all()
 
 
@@ -42,14 +45,18 @@ def test_baseline_pipeline_fits_raw_frame_and_predicts_probabilities(model_frame
     pipeline = clone(make_baseline_v2()).fit(model_frame, target)
     probabilities = pipeline.predict_proba(model_frame)[:, 1]
 
-    assert list(pipeline.named_steps) == ["design", "classifier"]
+    assert list(pipeline.named_steps) == ["preprocessor", "classifier"]
     assert probabilities.shape == (len(model_frame),)
     assert np.logical_and(probabilities >= 0, probabilities <= 1).all()
 
 
-def test_design_rejects_missing_features(model_frame):
-    with pytest.raises(ValueError, match="RET_18"):
-        FixedEffectDesign().fit(model_frame.drop(columns="RET_18"))
+def test_preprocessor_rejects_missing_features(model_frame):
+    with pytest.raises(ValueError, match="column"):
+        make_fixed_effect_preprocessor().fit(model_frame.drop(columns="RET_18"))
+
+    interaction = AllocationReturnInteraction().fit(model_frame)
+    unknown = model_frame.iloc[[0]].assign(ALLOCATION="unseen")
+    assert interaction.transform(unknown).nnz == 0
 
 
 def test_model_feature_order_is_explicit():

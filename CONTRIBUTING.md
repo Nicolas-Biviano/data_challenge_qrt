@@ -58,9 +58,8 @@ Before committing a documentation change, run:
 ```bash
 .venv/bin/python -m pydocstyle \
   src/__init__.py src/data.py src/dataloader.py src/schema.py src/utils.py \
-  src/cross_validation.py src/metrics.py
+  src/cross_validation.py src/metrics.py src/models.py
 .venv/bin/python -m pytest -q
 ```
 
-`models.py` and `features.py` will join this check after their public APIs are
-stabilized.
+`features.py` will join this check after its public API is stabilized.

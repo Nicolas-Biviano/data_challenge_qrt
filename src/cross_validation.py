@@ -33,10 +33,32 @@ Preprocessor = Callable[[Any, Any], tuple[Any, Any]]
 
 @dataclass
 class ModelConfig:
-    """Configuration for a legacy CV experiment.
+    """Configure the estimator and prediction rule used in validation.
 
-    Prefer putting preprocessing inside ``model`` as a scikit-learn Pipeline.
-    ``preprocessing`` exists only for the current research scripts.
+    Parameters
+    ----------
+    model
+        Scikit-learn-compatible estimator or pipeline. It is cloned before
+        every fold is fitted.
+    regression
+        If ``True``, fit the continuous target and threshold its predictions
+        for classification metrics. Otherwise, fit the binarized target and
+        require ``predict_proba``.
+    features
+        Predictor columns passed to the estimator. When omitted, structural
+        columns are removed and all remaining columns are used.
+    preprocessing
+        Legacy fold-level callback receiving train and validation predictors.
+        New code should place learned preprocessing inside ``model``.
+    threshold_classification
+        Probability threshold used to convert classification scores to labels.
+    threshold_regression
+        Threshold used to convert continuous predictions to labels.
+
+    Notes
+    -----
+    A complete scikit-learn pipeline is the preferred value for ``model``.
+    The callback remains available only while historical scripts are migrated.
     """
 
     model: Any
@@ -49,7 +71,19 @@ class ModelConfig:
 
 @dataclass
 class CVConfig:
-    """Date-grouped cross-validation configuration."""
+    """Configure date-grouped cross-validation.
+
+    Parameters
+    ----------
+    n_splits
+        Number of external validation folds.
+    shuffle
+        Whether to shuffle unique dates before assigning them to folds.
+    random_state
+        Seed used when ``shuffle`` is enabled.
+    verbose
+        Whether to emit fold-level progress through the module logger.
+    """
 
     n_splits: int = 8
     shuffle: bool = True
@@ -59,7 +93,31 @@ class CVConfig:
 
 @dataclass
 class FoldResult:
-    """Model, predictions and metrics for one external fold."""
+    """Store the fitted model and diagnostics for one external fold.
+
+    Parameters
+    ----------
+    fold_id
+        One-based fold identifier.
+    train_metrics
+        Metrics evaluated on the fold's training observations.
+    valid_metrics
+        Metrics evaluated on the fold's held-out observations.
+    train_index
+        Boolean index mask selecting training observations.
+    valid_index
+        Boolean index mask selecting validation observations.
+    train_dates
+        Date groups assigned to training.
+    valid_dates
+        Date groups assigned to validation.
+    fitted_model
+        Estimator fitted within the fold.
+    y_score_train, y_score_test
+        Continuous scores for the training and validation observations.
+    y_binary_train, y_binary_test
+        Thresholded labels for the training and validation observations.
+    """
 
     fold_id: int
     train_metrics: dict[str, Any]
@@ -77,7 +135,20 @@ class FoldResult:
 
 @dataclass
 class CVResult:
-    """Out-of-fold predictions and per-fold results."""
+    """Store complete out-of-fold predictions and fold-level results.
+
+    Parameters
+    ----------
+    n_folds
+        Number of external folds.
+    oof_results
+        One row per input observation with its fold, score, prediction, target,
+        date, allocation, and correctness indicator.
+    fold_results
+        Detailed result for each fitted fold.
+    mean_accuracy
+        Row-weighted accuracy across all out-of-fold predictions.
+    """
 
     n_folds: int
     oof_results: pd.DataFrame
@@ -85,6 +156,24 @@ class CVResult:
     mean_accuracy: float = np.nan
 
     def get_fold_results(self, i: int) -> FoldResult:
+        """Return one fold result by zero-based list position.
+
+        Parameters
+        ----------
+        i
+            Position in ``fold_results``. This is not the one-based ``fold_id``.
+
+        Returns
+        -------
+        FoldResult
+            Stored result for the requested fold.
+
+        Raises
+        ------
+        IndexError
+            If ``i`` is outside the available fold range.
+        """
+
         return self.fold_results[i]
 
     def score(
@@ -92,7 +181,28 @@ class CVResult:
         penalty: float = 1.0,
         grouper: GroupColumn = "fold",
     ) -> float:
-        """Return global accuracy minus grouped standard-error penalty."""
+        """Return global accuracy minus a grouped dispersion penalty.
+
+        Parameters
+        ----------
+        penalty
+            Multiplier applied to the simple standard error of group-level
+            accuracies.
+        grouper
+            OOF column defining groups. Supported values are ``"fold"``,
+            ``"TS"``, and ``"ALLOCATION"``.
+
+        Returns
+        -------
+        float
+            Row-weighted accuracy minus ``penalty`` times the grouped standard
+            error.
+
+        Notes
+        -----
+        This score is a model-selection diagnostic, not an econometric standard
+        error under multi-way panel dependence.
+        """
 
         summary = grouped_accuracy_summary(
             self.oof_results, grouper, penalty=penalty
@@ -104,7 +214,23 @@ class CVResult:
         penalty: float = 1.0,
         grouper: GroupColumn = "fold",
     ) -> dict[str, float | int]:
-        """Return all components of the penalized score."""
+        """Return all components of the grouped penalized score.
+
+        Parameters
+        ----------
+        penalty
+            Multiplier applied to the simple standard error of group-level
+            accuracies.
+        grouper
+            OOF column defining groups. Supported values are ``"fold"``,
+            ``"TS"``, and ``"ALLOCATION"``.
+
+        Returns
+        -------
+        dict
+            Accuracy, group-level dispersion, standard error, penalty,
+            penalized score, and number of observed groups.
+        """
 
         return grouped_accuracy_summary(
             self.oof_results, grouper, penalty=penalty
@@ -125,8 +251,40 @@ def run_cv(
 ) -> CVResult:
     """Run shuffled K-fold validation while keeping every date intact.
 
-    The function preserves the historical API and OOF column names.  The
-    estimator (which may be a complete sklearn Pipeline) is cloned per fold.
+    Parameters
+    ----------
+    X
+        Predictor frame. It must have a unique index and contain the ``TS``
+        grouping column.
+    y
+        Target frame aligned exactly with ``X``. It must contain ``target`` and
+        ``target_binarized``.
+    model_config
+        Estimator, feature, preprocessing, and threshold configuration.
+    cv_config
+        Fold configuration. Defaults to :class:`CVConfig`.
+
+    Returns
+    -------
+    CVResult
+        Complete OOF predictions and one fitted result per fold.
+
+    Raises
+    ------
+    ValueError
+        If indices, target columns, dates, targets, or split counts violate the
+        input contract.
+    TypeError
+        If a classification estimator does not implement ``predict_proba``.
+    RuntimeError
+        If date leakage or incomplete OOF coverage is detected.
+
+    Notes
+    -----
+    Unique dates are split, then all observations sharing a date are assigned
+    together. The estimator, including every step of a supplied scikit-learn
+    pipeline, is cloned and fitted independently inside each fold. The function
+    preserves the historical API and OOF column names.
     """
 
     cv_config = CVConfig() if cv_config is None else cv_config

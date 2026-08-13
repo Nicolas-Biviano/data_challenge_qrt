@@ -30,11 +30,30 @@ def classification_metrics(
     y_pred: Any,
     y_score: Any | None = None,
 ) -> dict[str, Any]:
-    """Return classification metrics used throughout the project.
+    """Compute the project's classification diagnostics.
 
-    Probability metrics are included only when ``y_score`` is supplied.  AUC
-    is reported as ``NaN`` for a single-class sample instead of aborting an
-    otherwise valid smoke test.
+    Parameters
+    ----------
+    y_true
+        Binary target labels.
+    y_pred
+        Binary predicted labels aligned with ``y_true``.
+    y_score
+        Positive-class probabilities aligned with ``y_true``. Probability
+        metrics are omitted when scores are not supplied.
+
+    Returns
+    -------
+    dict
+        Accuracy, balanced accuracy, F1, precision, recall, Matthews
+        correlation, confusion matrix, and observed and predicted positive
+        rates. AUC, Brier score, and log loss are also returned when
+        ``y_score`` is supplied.
+
+    Notes
+    -----
+    AUC is reported as ``NaN`` for a single-class sample so that an otherwise
+    valid fold or smoke test can still be evaluated.
     """
 
     truth = np.asarray(y_true)
@@ -61,7 +80,21 @@ def classification_metrics(
 
 
 def regression_metrics(y_true: Any, y_pred: Any) -> dict[str, float]:
-    """Return the regression metrics used by legacy experiments."""
+    """Compute the regression metrics used by legacy experiments.
+
+    Parameters
+    ----------
+    y_true
+        Continuous target values.
+    y_pred
+        Continuous predictions aligned with ``y_true``.
+
+    Returns
+    -------
+    dict of str to float
+        Mean squared error, mean absolute error, median absolute error, and
+        coefficient of determination.
+    """
 
     return {
         "mse": mean_squared_error(y_true, y_pred),
@@ -77,7 +110,35 @@ def grouped_accuracy_summary(
     *,
     penalty: float = 1.0,
 ) -> dict[str, float | int]:
-    """Summarise OOF accuracy and its dispersion across a grouping column."""
+    """Summarize OOF accuracy and its dispersion across groups.
+
+    Parameters
+    ----------
+    oof
+        Out-of-fold table containing ``is_correct`` and the grouping column.
+    group
+        Column whose distinct values define the stability units.
+    penalty
+        Multiplier applied to the simple standard error of group accuracies.
+
+    Returns
+    -------
+    dict
+        Row-weighted accuracy, unweighted mean and standard deviation of group
+        accuracies, simple standard error, penalty, penalized score, and group
+        count.
+
+    Raises
+    ------
+    ValueError
+        If required columns are missing or no non-missing groups are available.
+
+    Notes
+    -----
+    The standard error treats group-level accuracies as the sampling units. It
+    is a stability diagnostic rather than a multi-way clustered econometric
+    standard error.
+    """
 
     _require_columns(oof, {group, "is_correct"})
     accuracy_by_group = oof.groupby(group, observed=True)["is_correct"].mean()
@@ -106,7 +167,29 @@ def calibration_table(
     *,
     n_bins: int = 10,
 ) -> pd.DataFrame:
-    """Build an equal-width calibration table, retaining empty-bin safety."""
+    """Build an equal-width probability calibration table.
+
+    Parameters
+    ----------
+    y_true
+        Binary target labels.
+    y_probability
+        Positive-class probabilities in the closed interval ``[0, 1]``.
+    n_bins
+        Number of equal-width probability intervals.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Non-empty bins with their observation count, mean probability,
+        empirical positive rate, and absolute calibration gap.
+
+    Raises
+    ------
+    ValueError
+        If inputs have different lengths, fewer than two bins are requested,
+        or probabilities are missing or outside ``[0, 1]``.
+    """
 
     truth = pd.Series(np.asarray(y_true), name="y_true")
     probability = pd.Series(
@@ -140,7 +223,24 @@ def calibration_table(
 
 
 def expected_calibration_error(table: pd.DataFrame) -> float:
-    """Compute weighted expected calibration error from a calibration table."""
+    """Compute expected calibration error from a calibration table.
+
+    Parameters
+    ----------
+    table
+        Calibration table containing ``n`` and ``absolute_gap`` columns, as
+        produced by :func:`calibration_table`.
+
+    Returns
+    -------
+    float
+        Absolute calibration gaps averaged with bin counts as weights.
+
+    Raises
+    ------
+    ValueError
+        If required columns are missing or the table contains no observations.
+    """
 
     _require_columns(table, {"n", "absolute_gap"})
     total = table["n"].sum()
@@ -156,7 +256,36 @@ def build_validation_report(
     allocation_column: str = "ALLOCATION",
     n_calibration_bins: int = 10,
 ) -> dict[str, Any]:
-    """Create the core performance, stability and calibration report."""
+    """Build the core OOF performance, stability, and calibration report.
+
+    Parameters
+    ----------
+    oof
+        Out-of-fold table containing labels, predictions, scores, correctness,
+        and fold identifiers.
+    date_column
+        Optional date-group column used for stability diagnostics.
+    allocation_column
+        Optional allocation column used for stability diagnostics.
+    n_calibration_bins
+        Number of equal-width bins used in the calibration table.
+
+    Returns
+    -------
+    dict
+        Nested classification metrics, available stability summaries, and
+        calibration diagnostics.
+
+    Raises
+    ------
+    ValueError
+        If required OOF columns are missing or calibration inputs are invalid.
+
+    Notes
+    -----
+    Date and allocation stability entries are included only when their columns
+    are present. Fold stability is always required.
+    """
 
     _require_columns(
         oof,
@@ -195,7 +324,34 @@ def compare_oof(
     *,
     group: str = "TS",
 ) -> dict[str, float | int]:
-    """Compare two aligned OOF prediction tables on an identical row set."""
+    """Compare candidate and baseline OOF accuracy on identical observations.
+
+    Parameters
+    ----------
+    candidate
+        Candidate OOF table containing ``is_correct`` and ``group``.
+    baseline
+        Baseline OOF table with the same ordered index and group assignments.
+    group
+        Column defining the units used to summarize paired accuracy gains.
+
+    Returns
+    -------
+    dict
+        Row-weighted and group-mean accuracy gains, their simple group-level
+        standard error and 95% interval, win/tie/loss counts, and group count.
+
+    Raises
+    ------
+    ValueError
+        If required columns are missing or the OOF indices or groups are not
+        exactly aligned.
+
+    Notes
+    -----
+    Gains are paired by observation before aggregation. The reported interval
+    is descriptive and does not account for additional panel dependence.
+    """
 
     _require_columns(candidate, {group, "is_correct"})
     _require_columns(baseline, {group, "is_correct"})

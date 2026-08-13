@@ -23,7 +23,7 @@ from .metrics import (
     grouped_accuracy_summary,
     regression_metrics,
 )
-from .utils import Cols
+from .schema import Cols
 
 
 logger = logging.getLogger(__name__)

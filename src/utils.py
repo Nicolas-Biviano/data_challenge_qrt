@@ -1,17 +1,9 @@
-from enum import Enum
+"""Backward-compatible imports for :mod:`src.schema`.
 
-class Cols(Enum):
-    DATE = "TS"
-    ALLOCATION = "ALLOCATION"
-    GROUP = "GROUP"
-    TARGET = "target"
-    TARGET_BIN = "target_binarized"
-    TURNOVER = "MEDIAN_DAILY_TURNOVER"
-    
-    @classmethod
-    def ret_cols(cls, start=1, end=20):
-        return [f"RET_{i}" for i in range(start, end+1)]
-    
-    @classmethod
-    def vol_cols(cls, start=2, end=20):
-        return [f"SIGNED_VOLUME_{i}" for i in range(start, end+1)]
+New code should import ``Cols`` from ``src.schema``.
+"""
+
+from .schema import Cols
+
+
+__all__ = ["Cols"]

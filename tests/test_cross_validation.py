@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 import pytest
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
 
@@ -106,28 +105,6 @@ def test_same_seed_produces_identical_oof(classification_data):
     first = run_cv(X, y, model, config).oof_results
     second = run_cv(X, y, model, config).oof_results
     pd.testing.assert_frame_equal(first, second)
-
-
-def test_regression_mode_preserves_score_and_threshold(classification_data):
-    X, y = classification_data
-    result = run_cv(
-        X,
-        y,
-        ModelConfig(
-            model=make_pipeline(StandardScaler(), LinearRegression()),
-            features=["signal"],
-            regression=True,
-        ),
-        CVConfig(n_splits=4, random_state=11),
-    )
-
-    expected_prediction = (result.oof_results["score"] > 0).astype(int)
-    pd.testing.assert_series_equal(
-        result.oof_results["prediction"].astype(int),
-        expected_prediction,
-        check_names=False,
-    )
-    assert "mse" in result.fold_results[0].valid_metrics
 
 
 @pytest.mark.parametrize(

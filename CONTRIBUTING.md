@@ -7,6 +7,7 @@ without repeating the implementation line by line.
 ## Required coverage
 
 - Every public module starts with a one-sentence description of its scope.
+- Stable modules declare their supported import surface in `__all__`.
 - Every public function, method, class, and dataclass has a docstring.
 - Private helpers need a docstring only when their contract or rationale is not
   evident from their name and implementation.
@@ -51,3 +52,15 @@ alignment, units, and constraints rather than duplicating type annotations.
 
 A code change that modifies public behavior must update its docstring in the
 same commit. Documentation-only changes must not alter runtime behavior.
+
+Before committing a documentation change, run:
+
+```bash
+.venv/bin/python -m pydocstyle \
+  src/__init__.py src/data.py src/dataloader.py src/schema.py src/utils.py \
+  src/cross_validation.py src/metrics.py
+.venv/bin/python -m pytest -q
+```
+
+`models.py` and `features.py` will join this check after their public APIs are
+stabilized.

@@ -25,6 +25,17 @@ from sklearn.metrics import (
 )
 
 
+__all__ = [
+    "build_validation_report",
+    "calibration_table",
+    "classification_metrics",
+    "compare_oof",
+    "expected_calibration_error",
+    "grouped_accuracy_summary",
+    "regression_metrics",
+]
+
+
 def classification_metrics(
     y_true: Any,
     y_pred: Any,
@@ -55,7 +66,6 @@ def classification_metrics(
     AUC is reported as ``NaN`` for a single-class sample so that an otherwise
     valid fold or smoke test can still be evaluated.
     """
-
     truth = np.asarray(y_true)
     prediction = np.asarray(y_pred)
     metrics: dict[str, Any] = {
@@ -95,7 +105,6 @@ def regression_metrics(y_true: Any, y_pred: Any) -> dict[str, float]:
         Mean squared error, mean absolute error, median absolute error, and
         coefficient of determination.
     """
-
     return {
         "mse": mean_squared_error(y_true, y_pred),
         "mae": mean_absolute_error(y_true, y_pred),
@@ -139,7 +148,6 @@ def grouped_accuracy_summary(
     is a stability diagnostic rather than a multi-way clustered econometric
     standard error.
     """
-
     _require_columns(oof, {group, "is_correct"})
     accuracy_by_group = oof.groupby(group, observed=True)["is_correct"].mean()
     if accuracy_by_group.empty:
@@ -190,7 +198,6 @@ def calibration_table(
         If inputs have different lengths, fewer than two bins are requested,
         or probabilities are missing or outside ``[0, 1]``.
     """
-
     truth = pd.Series(np.asarray(y_true), name="y_true")
     probability = pd.Series(
         np.asarray(y_probability, dtype=float), name="probability"
@@ -241,7 +248,6 @@ def expected_calibration_error(table: pd.DataFrame) -> float:
     ValueError
         If required columns are missing or the table contains no observations.
     """
-
     _require_columns(table, {"n", "absolute_gap"})
     total = table["n"].sum()
     if total == 0:
@@ -286,7 +292,6 @@ def build_validation_report(
     Date and allocation stability entries are included only when their columns
     are present. Fold stability is always required.
     """
-
     _require_columns(
         oof,
         {
@@ -352,7 +357,6 @@ def compare_oof(
     Gains are paired by observation before aggregation. The reported interval
     is descriptive and does not account for additional panel dependence.
     """
-
     _require_columns(candidate, {group, "is_correct"})
     _require_columns(baseline, {group, "is_correct"})
     if not candidate.index.equals(baseline.index):

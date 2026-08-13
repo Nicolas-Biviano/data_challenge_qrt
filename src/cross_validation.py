@@ -29,6 +29,17 @@ from .schema import Cols
 logger = logging.getLogger(__name__)
 GroupColumn = Literal["TS", "fold", "ALLOCATION"]
 Preprocessor = Callable[[Any, Any], tuple[Any, Any]]
+__all__ = [
+    "CVConfig",
+    "CVResult",
+    "FoldResult",
+    "ModelConfig",
+    "run_cv",
+    # Historical spellings remain public until the research scripts migrate.
+    "CVconfig",
+    "CVresults",
+    "FoldResults",
+]
 
 
 @dataclass
@@ -173,7 +184,6 @@ class CVResult:
         IndexError
             If ``i`` is outside the available fold range.
         """
-
         return self.fold_results[i]
 
     def score(
@@ -196,14 +206,13 @@ class CVResult:
         -------
         float
             Row-weighted accuracy minus ``penalty`` times the grouped standard
-            error.
+        error.
 
         Notes
         -----
         This score is a model-selection diagnostic, not an econometric standard
         error under multi-way panel dependence.
         """
-
         summary = grouped_accuracy_summary(
             self.oof_results, grouper, penalty=penalty
         )
@@ -231,7 +240,6 @@ class CVResult:
             Accuracy, group-level dispersion, standard error, penalty,
             penalized score, and number of observed groups.
         """
-
         return grouped_accuracy_summary(
             self.oof_results, grouper, penalty=penalty
         )
@@ -286,13 +294,13 @@ def run_cv(
     pipeline, is cloned and fitted independently inside each fold. The function
     preserves the historical API and OOF column names.
     """
-
     cv_config = CVConfig() if cv_config is None else cv_config
     _validate_inputs(X, y, cv_config)
     if cv_config.verbose:
         logger.setLevel(logging.INFO)
 
     date_col = Cols.DATE.value
+    # Split unique dates rather than rows so no date can straddle a fold.
     unique_dates = X[date_col].unique()
     splitter = KFold(
         n_splits=cv_config.n_splits,
@@ -500,6 +508,8 @@ def _preprocess_fold_data(
         X_train = X_train.drop(columns=drop_columns)
         X_valid = X_valid.drop(columns=drop_columns)
     if model_config.preprocessing is not None:
+        # The legacy callback is fold-local; it must learn parameters from the
+        # training argument only. A Pipeline enforces this contract more safely.
         X_train, X_valid = model_config.preprocessing(X_train, X_valid)
     return X_train, X_valid
 
@@ -510,6 +520,7 @@ def _fit_model_and_predict(
     y_train: pd.DataFrame,
     model_config: ModelConfig,
 ) -> tuple[Any, np.ndarray, np.ndarray]:
+    # Cloning prevents fitted state from leaking from one fold into the next.
     model = clone(model_config.model)
     if model_config.regression:
         model.fit(X_train, y_train[Cols.TARGET.value])

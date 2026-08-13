@@ -3,6 +3,9 @@
 from enum import Enum
 
 
+__all__ = ["Cols"]
+
+
 class Cols(Enum):
     """Canonical raw-data and target column names.
 
@@ -33,7 +36,6 @@ class Cols(Enum):
         list of str
             Names from ``RET_{start}`` through ``RET_{end}``.
         """
-
         return [f"RET_{i}" for i in range(start, end + 1)]
 
     @classmethod
@@ -54,5 +56,4 @@ class Cols(Enum):
             Names from ``SIGNED_VOLUME_{start}`` through
             ``SIGNED_VOLUME_{end}``.
         """
-
         return [f"SIGNED_VOLUME_{i}" for i in range(start, end + 1)]

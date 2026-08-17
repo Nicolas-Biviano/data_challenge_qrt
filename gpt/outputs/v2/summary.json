@@ -1,0 +1,35 @@
+{
+  "model": "Logistic regression with allocation/group fixed effects and allocation x RET_1 slopes",
+  "C": 0.003,
+  "features": [
+    "ALLOCATION",
+    "GROUP",
+    "RET_1",
+    "RET_2",
+    "RET_3",
+    "RET_4",
+    "RET_7",
+    "RET_8",
+    "RET_9",
+    "RET_18"
+  ],
+  "target_encoding": false,
+  "date_order_used": false,
+  "cv": {
+    "accuracy": 0.525001280657518,
+    "ts_standard_error": 0.0017158856710961865,
+    "ts_penalized_score": 0.5232853949864219,
+    "allocation_standard_error": 0.00135252413388004,
+    "n_splits": 8,
+    "n_oof_rows": 527073
+  },
+  "test": {
+    "n_rows": 31870,
+    "positive_rate": 0.6022591779102604,
+    "probability_mean": 0.5064328780334354,
+    "probability_std": 0.030503306457668782
+  },
+  "fit": {
+    "n_iter": 40
+  }
+}

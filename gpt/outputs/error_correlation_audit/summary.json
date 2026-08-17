@@ -1,0 +1,30 @@
+{
+  "n_aligned_rows": 527073,
+  "category_shift": {
+    "ALLOCATION": {
+      "total_variation": 0.07424326645415892,
+      "train_categories": 278,
+      "test_categories": 278,
+      "unseen_test_categories": 0
+    },
+    "GROUP": {
+      "total_variation": 0.07348767497639487,
+      "train_categories": 4,
+      "test_categories": 4,
+      "unseen_test_categories": 0
+    },
+    "TS_rows": {
+      "train_n_dates": 2522,
+      "test_n_dates": 120,
+      "train_mean_rows": 208.99008723235528,
+      "test_mean_rows": 265.5833333333333,
+      "ks_statistic": 0.75
+    }
+  },
+  "prediction_shift": {
+    "v2_oof_positive_rate": 0.6060299047759987,
+    "v2_test_positive_rate": 0.6022591779102604,
+    "v2_test_probability_mean": 0.5064328780334354,
+    "v2_test_probability_std": 0.03050378502723756
+  }
+}

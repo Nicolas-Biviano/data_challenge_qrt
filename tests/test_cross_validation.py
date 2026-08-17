@@ -2,17 +2,32 @@ from __future__ import annotations
 
 import pandas as pd
 import pytest
+from sklearn.compose import ColumnTransformer
 from sklearn.linear_model import LogisticRegression
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from src.cross_validation import CVConfig, CVconfig, ModelConfig, run_cv
 
 
 def _classifier_pipeline():
-    return make_pipeline(
-        StandardScaler(),
-        LogisticRegression(C=0.7, solver="liblinear", random_state=3),
+    return Pipeline(
+        [
+            (
+                "preprocessor",
+                ColumnTransformer(
+                    [("signal", StandardScaler(), ["signal"])]
+                ),
+            ),
+            (
+                "classifier",
+                LogisticRegression(
+                    C=0.7,
+                    solver="liblinear",
+                    random_state=3,
+                ),
+            ),
+        ]
     )
 
 
@@ -58,12 +73,14 @@ def test_pipeline_preprocessing_is_fitted_inside_each_fold(classification_data):
     result = run_cv(
         X,
         y,
-        ModelConfig(model=_classifier_pipeline(), features=["signal"]),
+        ModelConfig(model=_classifier_pipeline()),
         CVConfig(n_splits=4, random_state=11),
     )
 
     for fold in result.fold_results:
-        fitted_scaler = fold.fitted_model.named_steps["standardscaler"]
+        fitted_scaler = fold.fitted_model.named_steps[
+            "preprocessor"
+        ].named_transformers_["signal"]
         expected_train_mean = X.loc[fold.train_index, "signal"].mean()
         assert fitted_scaler.mean_[0] == pytest.approx(expected_train_mean)
 

@@ -4,10 +4,10 @@ import pytest
 from sklearn.base import clone
 from sklearn.compose import ColumnTransformer
 
-from src.models import (
+from src.feature_engineering import AllocationReturnInteraction
+from src.pipelines import make_retained_pipeline
+from src.preprocessing import (
     MODEL_FEATURES,
-    AllocationReturnInteraction,
-    make_baseline_v2,
     make_fixed_effect_preprocessor,
 )
 
@@ -40,16 +40,14 @@ def test_fixed_effect_preprocessor_is_cloneable_and_sparse(model_frame):
     assert np.isfinite(matrix.data).all()
 
 
-def test_baseline_pipeline_fits_raw_frame_and_predicts_probabilities(model_frame):
+def test_retained_pipeline_fits_raw_frame_and_predicts_probabilities(model_frame):
     target = np.array([0, 1, 0, 1, 0, 1])
-    pipeline = clone(make_baseline_v2()).fit(model_frame, target)
+    pipeline = clone(make_retained_pipeline()).fit(model_frame, target)
     probabilities = pipeline.predict_proba(model_frame)[:, 1]
 
     assert list(pipeline.named_steps) == ["preprocessor", "classifier"]
     assert probabilities.shape == (len(model_frame),)
     assert np.logical_and(probabilities >= 0, probabilities <= 1).all()
-
-
 def test_preprocessor_rejects_missing_features(model_frame):
     with pytest.raises(ValueError, match="column"):
         make_fixed_effect_preprocessor().fit(model_frame.drop(columns="RET_18"))

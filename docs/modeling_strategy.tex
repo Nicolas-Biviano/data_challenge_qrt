@@ -1,0 +1,167 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage[margin=2.15cm]{geometry}
+\usepackage{amsmath,amssymb}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\definecolor{qrtblue}{HTML}{174A7E}
+\definecolor{qrtlight}{HTML}{EEF4F9}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+
+\begin{document}
+
+\begin{center}
+  {\Large\bfseries\color{qrtblue} Econometric Formulation of the Problem}\\[0.35em]
+  {\small A hierarchical panel model for predicting the sign of a future return}
+\end{center}
+
+\section*{1. Panel structure}
+
+The data form a panel. Allocation $a=1,\ldots,A$ is observed on date
+$t=1,\ldots,T$ and belongs to group $g(a)$. Let
+\[
+  r_{a,t+1} \quad \text{be the future return},
+  \qquad
+  y_{a,t}=\mathbf 1\{r_{a,t+1}>0\}
+\]
+be the continuous outcome and the associated binary target. At date $t$ we
+observe:
+\begin{itemize}
+  \item $x_{a,t}$: allocation-specific information known at prediction time;
+  \item $z_t$: the common market state, also known at prediction time.
+\end{itemize}
+
+The objective is to separate what is common to every observation from what is
+specific to a group, an allocation, or a date.
+
+\section*{2. General decomposition}
+
+A convenient econometric equation is
+\begin{equation}
+\boxed{
+\begin{aligned}
+ r_{a,t+1}
+ ={}& \underbrace{\mu}_{\text{global mean}}
+ + \underbrace{\theta_{g(a)}}_{\text{group effect}}
+ + \underbrace{\alpha_a}_{\text{allocation effect}} \\
+ &+ \underbrace{z_t^{\top}\kappa}_{\text{market-state effect}}
+ + \underbrace{x_{a,t}^{\top}\beta}_{\text{common slopes}}
+ + \underbrace{x_{a,t}^{\top}b_a}_{\text{slope deviation}}
+ + \underbrace{\varepsilon_{a,t+1}}_{\text{future shock}}.
+\end{aligned}
+}
+\label{eq:panel}
+\end{equation}
+
+The components have the following meaning:
+\begin{center}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Term & Interpretation \\
+\midrule
+$\mu$ & average return across the whole panel; \\
+$\theta_{g(a)}$ & persistent difference between groups; \\
+$\alpha_a$ & allocation $a$'s deviation from its group; \\
+$z_t^\top\kappa$ & effect of the market state shared on date $t$; \\
+$x_{a,t}^\top\beta$ & response to predictors common to all allocations; \\
+$x_{a,t}^\top b_a$ & allocation-specific deviation from the common response; \\
+$\varepsilon_{a,t+1}$ & future information not known at date $t$. \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Hence allocation $a$ has total intercept
+\[
+  \mu+\theta_{g(a)}+\alpha_a
+\]
+and total slope vector
+\[
+  \beta+b_a.
+\]
+This makes the decomposition easy to read: there is a common model, to which
+we add progressively finer group- and allocation-level corrections.
+
+\section*{3. The date effect and forecasting}
+
+For an in-sample panel regression one could write an unrestricted date fixed
+effect $\lambda_t$. It is useful conceptually to decompose it as
+\[
+  \lambda_t=z_t^\top\kappa+\nu_t,
+\]
+where $z_t^\top\kappa$ is explained by information observed on date $t$ and
+$\nu_t$ is an unpredictable common shock. An unrestricted $\lambda_t$ cannot
+be used to forecast a new date because its coefficient is not yet known.
+Therefore the forecasting equation uses the observable component
+$z_t^\top\kappa$; the remaining $\nu_t$ is absorbed into the forecast error.
+
+\section*{4. From return prediction to sign prediction}
+
+Define the systematic score, excluding the future shock, by
+\[
+  \eta_{a,t}
+  =\mu+\theta_{g(a)}+\alpha_a+z_t^\top\kappa
+   +x_{a,t}^\top\beta+x_{a,t}^\top b_a.
+\]
+There are two equivalent modeling routes.
+
+\textbf{Continuous route.} Estimate Equation~\eqref{eq:panel}, predict
+$\widehat r_{a,t+1}=\widehat\eta_{a,t}$, and use
+\[
+  \widehat y_{a,t}=\mathbf 1\{\widehat\eta_{a,t}>0\}.
+\]
+If $\varepsilon_{a,t+1}\sim\mathcal N(0,\sigma^2)$, then
+\[
+  \Pr(y_{a,t}=1\mid x_{a,t},z_t,a)
+  =\Phi\!\left(\frac{\eta_{a,t}}{\sigma}\right).
+\]
+
+\textbf{Binary route.} Specify the sign probability directly as
+\begin{equation}
+  \Pr(y_{a,t}=1\mid x_{a,t},z_t,a)
+  =F(\eta_{a,t}),
+\label{eq:binary}
+\end{equation}
+where $F$ is the logistic cdf (logit) or the standard normal cdf (probit).
+With either symmetric link, the default $50\%$ decision rule is equivalent to
+$\widehat\eta_{a,t}>0$.
+
+\section*{5. Partial pooling and identification}
+
+Estimating an unrelated coefficient for every allocation is noisy. A
+hierarchical specification shares information across the panel:
+\[
+  \theta_g\sim\mathcal N(0,\sigma_g^2),\qquad
+  \alpha_a\sim\mathcal N(0,\sigma_a^2),\qquad
+  b_a\sim\mathcal N(0,\Sigma_b).
+\]
+Small or weakly observed groups and allocations are then shrunk toward the
+common model, while well-observed ones may differ when the data support it.
+The same principle can be implemented with penalized fixed effects.
+
+For a pure fixed-effect formulation, impose normalizations such as
+\[
+  \sum_g\theta_g=0,
+  \qquad
+  \sum_{a:g(a)=g}\alpha_a=0,
+  \qquad
+  \sum_a b_a=0,
+\]
+so that the global, group, and allocation components are separately identified.
+
+\vfill
+\begin{center}
+\colorbox{qrtlight}{\parbox{0.91\linewidth}{\small
+\textbf{Core model.} Future returns are decomposed into a global component,
+nested group and allocation effects, an observable market-state effect, common
+predictor slopes, allocation-specific slope deviations, and an unpredictable
+shock. The classification target is simply the sign of this latent return.}}
+\end{center}
+
+\end{document}

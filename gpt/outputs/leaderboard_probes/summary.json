@@ -1,0 +1,38 @@
+{
+  "metrics": {
+    "ret1_sign": {
+      "oof_accuracy": 0.5189243235756716,
+      "oof_positive_rate": 0.511722285148357,
+      "test_positive_rate": 0.5151866959523063,
+      "role": "baseline sans apprentissage"
+    },
+    "ridge_returns_only": {
+      "oof_accuracy": 0.5204041944853939,
+      "oof_positive_rate": 0.5626943516363009,
+      "test_positive_rate": 0.5654534044556009,
+      "role": "test des effets catégoriels de V1"
+    },
+    "lgbm_linear_returns_compact": {
+      "oof_accuracy": 0.5244415858903795,
+      "oof_positive_rate": 0.5425719018048734,
+      "test_positive_rate": 0.5506432381550047,
+      "role": "modèle le plus divers face à V1/V2"
+    },
+    "blend_v1_lgbm_50_50": {
+      "oof_accuracy": 0.5252019687974911,
+      "oof_positive_rate": 0.5493741853602829,
+      "test_positive_rate": 0.5538751176655161,
+      "role": "blend préfixé des deux meilleurs modèles publics"
+    }
+  },
+  "submission_priority": [
+    "blend_v1_lgbm_50_50",
+    "ridge_returns_only",
+    "ret1_sign",
+    "lgbm_linear_returns_compact"
+  ],
+  "known_public_scores": {
+    "V1": "environ 0.5118",
+    "V2": "environ 0.5070"
+  }
+}

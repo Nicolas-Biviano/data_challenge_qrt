@@ -56,8 +56,9 @@ class ModelConfig:
         for classification metrics. Otherwise, fit the binarized target and
         require ``predict_proba``.
     features
-        Predictor columns passed to the estimator. When omitted, structural
-        columns are removed and all remaining columns are used.
+        Legacy predictor-column selector applied before the estimator. When
+        omitted, the raw frame is passed unchanged so the pipeline owns column
+        selection and feature engineering.
     preprocessing
         Legacy fold-level callback receiving train and validation predictors.
         New code should place learned preprocessing inside ``model``.
@@ -69,7 +70,8 @@ class ModelConfig:
     Notes
     -----
     A complete scikit-learn pipeline is the preferred value for ``model``.
-    The callback remains available only while historical scripts are migrated.
+    ``features`` and the callback remain available only while historical
+    scripts are migrated.
     """
 
     model: Any
@@ -495,18 +497,6 @@ def _preprocess_fold_data(
     if model_config.features is not None:
         X_train = X_train[model_config.features]
         X_valid = X_valid[model_config.features]
-    else:
-        drop_columns = [
-            column
-            for column in (
-                Cols.ALLOCATION.value,
-                Cols.DATE.value,
-                Cols.GROUP.value,
-            )
-            if column in X_train
-        ]
-        X_train = X_train.drop(columns=drop_columns)
-        X_valid = X_valid.drop(columns=drop_columns)
     if model_config.preprocessing is not None:
         # The legacy callback is fold-local; it must learn parameters from the
         # training argument only. A Pipeline enforces this contract more safely.
@@ -546,15 +536,3 @@ def _positive_class_probability(model: Any, X: Any) -> np.ndarray:
     if positions.size != 1:
         raise ValueError("Classification estimator has no unique positive class 1")
     return probabilities[:, positions[0]]
-
-
-def _score_model_regression(y_true: Any, y_pred: Any) -> dict[str, float]:
-    return regression_metrics(y_true, y_pred)
-
-
-def _score_model_classification(
-    y_true: Any,
-    y_pred_binary: Any,
-    y_pred_score: Any | None = None,
-) -> dict[str, Any]:
-    return classification_metrics(y_true, y_pred_binary, y_pred_score)

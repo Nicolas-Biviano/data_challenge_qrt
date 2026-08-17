@@ -1,0 +1,17 @@
+{
+  "reference_oof": "/Users/macbookpro/Desktop/Machine_Learning/challenge_data_ens/data_challenge_qrt/gpt/outputs/classification_full/oof_logistic_C_0.003.csv",
+  "n_quantiles": 10,
+  "top_interactions": [
+    "date_std_SIGNED_VOLUME_1",
+    "date_rank_SIGNED_VOLUME_1",
+    "group_date_rank_MEDIAN_DAILY_TURNOVER",
+    "date_mean_SIGNED_VOLUME_1",
+    "group_date_std_SIGNED_VOLUME_2",
+    "group_date_std_SIGNED_VOLUME_1",
+    "date_std_MEDIAN_DAILY_TURNOVER",
+    "group_date_mean_SIGNED_VOLUME_2"
+  ],
+  "target_encoding": false,
+  "date_order_used": false,
+  "ranking_target": "out-of-fold classification residual"
+}

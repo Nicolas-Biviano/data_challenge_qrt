@@ -1,0 +1,107 @@
+{
+  "purpose": "exploratory atomic screen; not an unbiased selected-model score",
+  "allocation_interaction_scale": 0.2,
+  "n_states": 8,
+  "best_state": "market_ret1_dispersion",
+  "stable_positive_states": [
+    "market_short_momentum"
+  ],
+  "results": [
+    {
+      "state": "market_ret1_dispersion",
+      "accuracy": 0.52507147966221,
+      "positive_prediction_rate": 0.602013383345381,
+      "gain_accuracy": 7.019900469194969e-05,
+      "date_paired_standard_error": 0.00027082148248951376,
+      "ci95_low": -0.0004606111009874972,
+      "ci95_high": 0.0006010091103713966,
+      "folds_won": 4,
+      "folds_tied": 0,
+      "paired_n_dates": 2522
+    },
+    {
+      "state": "market_short_momentum",
+      "accuracy": 0.5250506096878421,
+      "positive_prediction_rate": 0.6054038055449624,
+      "gain_accuracy": 4.9329030324072756e-05,
+      "date_paired_standard_error": 0.00031227135267573766,
+      "ci95_low": -0.000562722820920373,
+      "ci95_high": 0.0006613808815685185,
+      "folds_won": 6,
+      "folds_tied": 0,
+      "paired_n_dates": 2522
+    },
+    {
+      "state": "group_ret1_relative",
+      "accuracy": 0.5249709243311648,
+      "positive_prediction_rate": 0.6062006591117359,
+      "gain_accuracy": -3.0356326353275542e-05,
+      "date_paired_standard_error": 0.0001221588453880522,
+      "ci95_low": -0.0002697876633138579,
+      "ci95_high": 0.0002090750106073068,
+      "folds_won": 3,
+      "folds_tied": 0,
+      "paired_n_dates": 2522
+    },
+    {
+      "state": "market_ret1_mean",
+      "accuracy": 0.5249481570863997,
+      "positive_prediction_rate": 0.6047587336099554,
+      "gain_accuracy": -5.31235711182322e-05,
+      "date_paired_standard_error": 0.0004138100180946755,
+      "ci95_low": -0.0008641912065837962,
+      "ci95_high": 0.0007579440643473318,
+      "folds_won": 2,
+      "folds_tied": 1,
+      "paired_n_dates": 2522
+    },
+    {
+      "state": "group_momentum_relative",
+      "accuracy": 0.5248684717297224,
+      "positive_prediction_rate": 0.6061133846734703,
+      "gain_accuracy": -0.0001328089277955805,
+      "date_paired_standard_error": 0.0001499670450203604,
+      "ci95_low": -0.0004267443360354868,
+      "ci95_high": 0.00016112648044432583,
+      "folds_won": 4,
+      "folds_tied": 0,
+      "paired_n_dates": 2522
+    },
+    {
+      "state": "group_dispersion_relative",
+      "accuracy": 0.524834320862575,
+      "positive_prediction_rate": 0.6097257875095101,
+      "gain_accuracy": -0.0001669597949430155,
+      "date_paired_standard_error": 0.00027584554172231646,
+      "ci95_low": -0.0007076170567187558,
+      "ci95_high": 0.00037369746683272475,
+      "folds_won": 4,
+      "folds_tied": 1,
+      "paired_n_dates": 2522
+    },
+    {
+      "state": "market_ret1_breadth",
+      "accuracy": 0.524764121857883,
+      "positive_prediction_rate": 0.6051438795005626,
+      "gain_accuracy": -0.00023715879963496519,
+      "date_paired_standard_error": 0.0004143983931946693,
+      "ci95_low": -0.001049379650296517,
+      "ci95_high": 0.0005750620510265865,
+      "folds_won": 3,
+      "folds_tied": 0,
+      "paired_n_dates": 2522
+    },
+    {
+      "state": "market_recent_volatility",
+      "accuracy": 0.5246123402261167,
+      "positive_prediction_rate": 0.6045709038406445,
+      "gain_accuracy": -0.00038894043140134287,
+      "date_paired_standard_error": 0.00017208154922868145,
+      "ci95_low": -0.0007262202678895585,
+      "ci95_high": -5.1660594913127255e-05,
+      "folds_won": 2,
+      "folds_tied": 0,
+      "paired_n_dates": 2522
+    }
+  ]
+}

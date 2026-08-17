@@ -1,0 +1,15 @@
+{
+  "candidate": "H11 allocation response, scale 0.20",
+  "selection": "preregistered scale; not selected from the exploratory scale curve",
+  "C": 0.003,
+  "n_states": 8,
+  "n_allocations": 278,
+  "n_train_rows": 527073,
+  "n_test_rows": 31870,
+  "positive_prediction_rate": 0.6036397866331974,
+  "probability_mean": 0.5065880094266777,
+  "probability_std": 0.0312899546125068,
+  "n_iter": 63,
+  "submission_index_exact": true,
+  "response_variance_first_3_svd": 0.729491208629387
+}

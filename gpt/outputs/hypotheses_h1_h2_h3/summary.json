@@ -1,0 +1,64 @@
+{
+  "H1": {
+    "all_dates_accuracy": 0.5189413345173446,
+    "best_complete_only": {
+      "model": "Dates compl\u00e8tes, C=0.01",
+      "n_dates": 1273,
+      "n_rows": 351348,
+      "accuracy": 0.5183180208795838,
+      "accuracy_ci_low": 0.5148940651433906,
+      "accuracy_ci_high": 0.5217850251033164,
+      "gain_vs_v2": -0.0006233136377608028,
+      "gain_ci_low": -0.0028009978710566317,
+      "gain_ci_high": 0.001565755319512239
+    }
+  },
+  "H2": {
+    "global_auc": 0.5352163888410209,
+    "mean_fold_auc": 0.5354155155794817,
+    "natural_accuracy": 0.525001280657518,
+    "oracle_date_accuracy": 0.6091091746304591,
+    "natural_date_accuracy_recomputed": 0.525001280657518,
+    "learned_thresholds": [
+      {
+        "method": "Seuil 0.5",
+        "accuracy": 0.525001280657518,
+        "accuracy_complete_dates": 0.5184375604813461,
+        "prediction_positive_rate": 0.6060299047759987,
+        "prediction_positive_rate_complete": 0.5989617131732641,
+        "threshold_mean": 0.5
+      },
+      {
+        "method": "Offset constant cross-fitt\u00e9",
+        "accuracy": 0.523143852938777,
+        "accuracy_complete_dates": 0.5165192344911598,
+        "prediction_positive_rate": 0.5064668461484463,
+        "prediction_positive_rate_complete": 0.5071211448478432,
+        "threshold_mean": 0.5065931101163632
+      },
+      {
+        "method": "Offset Ridge market",
+        "accuracy": 0.5218650926911452,
+        "accuracy_complete_dates": 0.5156426107449025,
+        "prediction_positive_rate": 0.4840335209733756,
+        "prediction_positive_rate_complete": 0.49738720584719426,
+        "threshold_mean": 0.5085025773827464
+      },
+      {
+        "method": "Offset RandomForest market",
+        "accuracy": 0.5226183090387859,
+        "accuracy_complete_dates": 0.5161350000569236,
+        "prediction_positive_rate": 0.4737028836612765,
+        "prediction_positive_rate_complete": 0.483170531780457,
+        "threshold_mean": 0.5084915916859754
+      }
+    ]
+  },
+  "H3": {
+    "n_hard": 300,
+    "n_easy": 576,
+    "auc": 0.46879050925925925,
+    "accuracy": 0.5091324200913242,
+    "balanced_accuracy": 0.4957638888888889
+  }
+}

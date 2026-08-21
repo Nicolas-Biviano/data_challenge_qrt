@@ -36,6 +36,7 @@ archive/
 gpt/
 CLAUDE.local.md
 markdowns/
+misc/
 
 # OS
 .DS_Store

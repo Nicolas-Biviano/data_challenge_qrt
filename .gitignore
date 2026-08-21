@@ -28,8 +28,14 @@ figures/
 mlflow.db
 mlruns/
 
-# Local research archive
+# Test tooling
+.pytest_cache/
+
+# Local-only research material (not part of the public repo)
 archive/
+gpt/
+CLAUDE.local.md
+markdowns/
 
 # OS
 .DS_Store

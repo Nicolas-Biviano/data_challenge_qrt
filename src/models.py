@@ -1,6 +1,7 @@
 """Estimator factories without feature or validation logic."""
 
 from sklearn.linear_model import LogisticRegression, Ridge
+from lightgbm import LGBMRegressor
 
 
 RETAINED_LOGISTIC_C = 0.003
@@ -60,3 +61,28 @@ def make_ridge_regressor(
         Unfitted continuous-target estimator.
     """
     return Ridge(alpha=alpha, solver="lsqr")
+
+def make_lgbm() -> LGBMRegressor:
+    """Build a lgbm regressor.
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    lightgbm.LGBMRegressor
+        Unfitted continuous-target estimator.
+    """    
+    return LGBMRegressor(
+        boosting_type    = "gbdt",
+        max_depth        = 3, 
+        num_leaves       = 2 ** 3,
+        learning_rate    = 1e-3,
+        n_estimators     = 1_000,
+        min_split_gain   = 0.01,
+        subsample        = 0.7, 
+        colsample_bytree = 0.7,
+        n_jobs           = -1,
+        reg_lambda       = 100,
+        reg_alpha        = 1,
+    )

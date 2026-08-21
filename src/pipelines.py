@@ -7,6 +7,7 @@ from .models import (
     RETAINED_LOGISTIC_C,
     make_logistic_classifier,
     make_ridge_regressor,
+    make_lgbm
 )
 from .preprocessing import make_fixed_effect_preprocessor
 
@@ -71,6 +72,19 @@ def make_first_ridge_pipeline(
     sklearn.pipeline.Pipeline
         Unfitted feature, preprocessing, and regression recipe.
     """
+    return Pipeline(
+        [
+            (
+                "preprocessor",
+                make_fixed_effect_preprocessor(
+                    interaction_scale=interaction_scale
+                ),
+            ),
+            ("regressor", make_ridge_regressor(alpha=alpha)),
+        ]
+    )
+
+def make_lgbm_pipe_v1() -> Pipeline:
     return Pipeline(
         [
             (

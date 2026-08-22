@@ -37,7 +37,11 @@ gpt/
 CLAUDE.local.md
 markdowns/
 misc/
+research/scratch/
 .claude
+
+# Tracked research log: exempt from the blanket *.csv rule above
+!research/candidates.csv
 
 # OS
 .DS_Store

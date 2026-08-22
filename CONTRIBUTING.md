@@ -38,6 +38,27 @@ alignment, units, and constraints rather than duplicating type annotations.
 - Remove stale commented-out code instead of explaining it.
 - Do not narrate standard pandas, NumPy, or scikit-learn operations.
 
+## Research workflow
+
+New model ideas move through three tiers, in order. Each tier has a different
+bar for polish and a different home in the repo.
+
+1. **Scratch** — `research/scratch/` (gitignored). Try anything here: call
+   `run_cv` directly from a throwaway notebook or script, no docstrings, no
+   tests, no narrative.
+2. **Tracked research** — a candidate worth remembering. Call
+   `src.experiment_log.log_candidate(name, cv_result, estimator, notes=...)`
+   after a `run_cv` run; it appends one row to the committed
+   `research/candidates.csv` with the candidate's parameters and a narrow set
+   of headline metrics. The log's git history is itself a legible trail of
+   what was tried and why it was kept or rejected — that is the point of
+   committing it rather than using a local-only experiment tracker.
+3. **Presented** — a numbered notebook under `notebooks/` (see
+   `01_retained_model.ipynb`). A candidate is promoted here once it is
+   retained: rebuilt as a canonical factory in `src/models.py` /
+   `src/pipelines.py`, exported via `__all__`, documented per this file, and
+   narrated with the same rigor as the existing presentation notebooks.
+
 ## Project-specific contracts
 
 - State whether frames must be indexed by `ROW_ID` and whether indices must be
@@ -59,7 +80,7 @@ Before committing a documentation change, run:
 .venv/bin/python -m pydocstyle \
   src/__init__.py src/data.py src/schema.py \
   src/cross_validation.py src/metrics.py src/models.py src/preprocessing.py \
-  src/pipelines.py src/feature_engineering/__init__.py \
+  src/pipelines.py src/experiment_log.py src/feature_engineering/__init__.py \
   src/feature_engineering/interactions.py
 .venv/bin/python -m pytest tests -q
 ```

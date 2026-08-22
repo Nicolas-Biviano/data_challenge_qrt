@@ -41,3 +41,21 @@ def classification_data() -> tuple[pd.DataFrame, pd.DataFrame]:
         index=index,
     )
     return X, y
+
+
+@pytest.fixture
+def model_frame() -> pd.DataFrame:
+    return pd.DataFrame(
+        {
+            "ALLOCATION": ["A", "B", "A", "B", "A", "B"],
+            "GROUP": ["G1", "G1", "G2", "G2", "G1", "G2"],
+            "RET_1": [-0.3, 0.2, np.nan, 0.5, -0.1, 0.7],
+            "RET_2": [-0.2, 0.1, 0.3, 0.4, -0.2, 0.6],
+            "RET_3": [-0.1, 0.0, 0.2, 0.3, -0.3, 0.5],
+            "RET_4": [-0.4, 0.3, 0.1, 0.2, -0.4, 0.4],
+            "RET_7": [-0.2, 0.4, 0.0, 0.1, -0.5, 0.3],
+            "RET_8": [-0.3, 0.5, -0.1, 0.0, -0.6, 0.2],
+            "RET_9": [-0.4, 0.6, -0.2, -0.1, -0.7, 0.1],
+            "RET_18": [-0.5, 0.7, -0.3, -0.2, -0.8, 0.0],
+        }
+    )

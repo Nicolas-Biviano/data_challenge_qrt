@@ -37,6 +37,7 @@ gpt/
 CLAUDE.local.md
 markdowns/
 misc/
+.claude
 
 # OS
 .DS_Store

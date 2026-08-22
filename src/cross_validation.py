@@ -1,17 +1,15 @@
-"""Legacy-compatible cross-validation API.
+"""Date-grouped cross-validation orchestration.
 
-The public ``run_cv`` function is retained for the existing research scripts.
-New code can pass a complete scikit-learn ``Pipeline`` as ``ModelConfig.model``;
-the estimator is cloned and fitted independently in every date-grouped fold.
-The separate preprocessing callback remains temporarily available for backward
-compatibility and will be removed after the model migration.
+``ModelConfig.model`` takes a complete scikit-learn ``Pipeline``; the estimator
+is cloned and fitted independently in every date-grouped fold so that learned
+preprocessing cannot leak across the validation boundary.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
 import logging
-from typing import Any, Callable, Literal
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
@@ -28,17 +26,12 @@ from .schema import Cols
 
 logger = logging.getLogger(__name__)
 GroupColumn = Literal["TS", "fold", "ALLOCATION"]
-Preprocessor = Callable[[Any, Any], tuple[Any, Any]]
 __all__ = [
     "CVConfig",
     "CVResult",
     "FoldResult",
     "ModelConfig",
     "run_cv",
-    # Historical spellings remain public until the research scripts migrate.
-    "CVconfig",
-    "CVresults",
-    "FoldResults",
 ]
 
 
@@ -55,13 +48,6 @@ class ModelConfig:
         If ``True``, fit the continuous target and threshold its predictions
         for classification metrics. Otherwise, fit the binarized target and
         require ``predict_proba``.
-    features
-        Legacy predictor-column selector applied before the estimator. When
-        omitted, the raw frame is passed unchanged so the pipeline owns column
-        selection and feature engineering.
-    preprocessing
-        Legacy fold-level callback receiving train and validation predictors.
-        New code should place learned preprocessing inside ``model``.
     threshold_classification
         Probability threshold used to convert classification scores to labels.
     threshold_regression
@@ -69,15 +55,13 @@ class ModelConfig:
 
     Notes
     -----
-    A complete scikit-learn pipeline is the preferred value for ``model``.
-    ``features`` and the callback remain available only while historical
-    scripts are migrated.
+    ``model`` should be a complete scikit-learn pipeline that owns its own
+    column selection and preprocessing, so that fitting happens independently
+    inside each fold.
     """
 
     model: Any
     regression: bool = False
-    features: list[str] | None = None
-    preprocessing: Preprocessor | None = None
     threshold_classification: float = 0.5
     threshold_regression: float = 0.0
 
@@ -247,12 +231,6 @@ class CVResult:
         )
 
 
-# Compatibility aliases used throughout the historical scripts.
-CVconfig = CVConfig
-CVresults = CVResult
-FoldResults = FoldResult
-
-
 def run_cv(
     X: pd.DataFrame,
     y: pd.DataFrame,
@@ -270,7 +248,7 @@ def run_cv(
         Target frame aligned exactly with ``X``. It must contain ``target`` and
         ``target_binarized``.
     model_config
-        Estimator, feature, preprocessing, and threshold configuration.
+        Estimator and threshold configuration.
     cv_config
         Fold configuration. Defaults to :class:`CVConfig`.
 
@@ -293,8 +271,7 @@ def run_cv(
     -----
     Unique dates are split, then all observations sharing a date are assigned
     together. The estimator, including every step of a supplied scikit-learn
-    pipeline, is cloned and fitted independently inside each fold. The function
-    preserves the historical API and OOF column names.
+    pipeline, is cloned and fitted independently inside each fold.
     """
     cv_config = CVConfig() if cv_config is None else cv_config
     _validate_inputs(X, y, cv_config)
@@ -329,11 +306,8 @@ def run_cv(
         y_train = y.loc[train_mask]
         y_valid = y.loc[valid_mask]
 
-        X_train_ready, X_valid_ready = _preprocess_fold_data(
-            X_train, X_valid, model_config
-        )
         model, train_score, valid_score = _fit_model_and_predict(
-            X_train_ready, X_valid_ready, y_train, model_config
+            X_train, X_valid, y_train, model_config
         )
 
         if model_config.regression:
@@ -482,26 +456,6 @@ def _validate_oof_coverage(oof: pd.DataFrame, expected_folds: int) -> None:
             f"Unexpected OOF folds: observed={sorted(observed_folds)}, "
             f"expected={sorted(required_folds)}"
         )
-
-
-# Historical helper names kept for direct imports in notebooks.
-def _check_data(X: pd.DataFrame, y: pd.DataFrame) -> None:
-    _validate_inputs(X, y, CVConfig(n_splits=2))
-
-
-def _preprocess_fold_data(
-    X_train: pd.DataFrame,
-    X_valid: pd.DataFrame,
-    model_config: ModelConfig,
-) -> tuple[Any, Any]:
-    if model_config.features is not None:
-        X_train = X_train[model_config.features]
-        X_valid = X_valid[model_config.features]
-    if model_config.preprocessing is not None:
-        # The legacy callback is fold-local; it must learn parameters from the
-        # training argument only. A Pipeline enforces this contract more safely.
-        X_train, X_valid = model_config.preprocessing(X_train, X_valid)
-    return X_train, X_valid
 
 
 def _fit_model_and_predict(

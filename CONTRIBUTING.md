@@ -57,7 +57,7 @@ Before committing a documentation change, run:
 
 ```bash
 .venv/bin/python -m pydocstyle \
-  src/__init__.py src/data.py src/dataloader.py src/schema.py src/utils.py \
+  src/__init__.py src/data.py src/schema.py \
   src/cross_validation.py src/metrics.py src/models.py src/preprocessing.py \
   src/pipelines.py src/feature_engineering/__init__.py \
   src/feature_engineering/interactions.py

@@ -10,7 +10,7 @@ import numpy as np
 from numpy.typing import ArrayLike, NDArray
 import pandas as pd
 
-from .utils import Cols
+from .schema import Cols
 
 
 FeatureBlock = Literal["market", "residual", "variance_ratio", "dispersion_herding", "interactions", "signed_volume"]

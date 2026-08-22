@@ -7,7 +7,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
-from src.cross_validation import CVConfig, CVconfig, ModelConfig, run_cv
+from src.cross_validation import CVConfig, ModelConfig, run_cv
 
 
 def _classifier_pipeline():
@@ -31,13 +31,13 @@ def _classifier_pipeline():
     )
 
 
-def test_legacy_reference_is_unchanged(classification_data):
+def test_oof_accuracy_matches_reference_values(classification_data):
     X, y = classification_data
     result = run_cv(
         X,
         y,
-        ModelConfig(model=_classifier_pipeline(), features=["signal"]),
-        CVconfig(n_splits=4, random_state=11),
+        ModelConfig(model=_classifier_pipeline()),
+        CVConfig(n_splits=4, random_state=11),
     )
 
     assert result.mean_accuracy == pytest.approx(0.8611111111111112)
@@ -55,7 +55,7 @@ def test_dates_are_disjoint_and_oof_is_complete(classification_data):
     result = run_cv(
         X,
         y,
-        ModelConfig(model=_classifier_pipeline(), features=["signal"]),
+        ModelConfig(model=_classifier_pipeline()),
         CVConfig(n_splits=4, random_state=11),
     )
 
@@ -85,39 +85,10 @@ def test_pipeline_preprocessing_is_fitted_inside_each_fold(classification_data):
         assert fitted_scaler.mean_[0] == pytest.approx(expected_train_mean)
 
 
-def test_legacy_preprocessing_callback_remains_available(classification_data):
-    X, y = classification_data
-    fitted_means = []
-
-    def legacy_preprocessing(X_train, X_valid):
-        mean = X_train["signal"].mean()
-        fitted_means.append(mean)
-        return X_train - mean, X_valid - mean
-
-    result = run_cv(
-        X,
-        y,
-        ModelConfig(
-            model=LogisticRegression(
-                C=0.7, solver="liblinear", random_state=3
-            ),
-            features=["signal"],
-            preprocessing=legacy_preprocessing,
-        ),
-        CVConfig(n_splits=4, random_state=11),
-    )
-
-    assert len(fitted_means) == 4
-    for fitted_mean, fold in zip(fitted_means, result.fold_results):
-        assert fitted_mean == pytest.approx(
-            X.loc[fold.train_index, "signal"].mean()
-        )
-
-
 def test_same_seed_produces_identical_oof(classification_data):
     X, y = classification_data
     config = CVConfig(n_splits=4, random_state=11)
-    model = ModelConfig(model=_classifier_pipeline(), features=["signal"])
+    model = ModelConfig(model=_classifier_pipeline())
 
     first = run_cv(X, y, model, config).oof_results
     second = run_cv(X, y, model, config).oof_results
@@ -140,7 +111,7 @@ def test_invalid_inputs_fail_explicitly(classification_data, mutation, message):
         run_cv(
             X,
             y,
-            ModelConfig(model=_classifier_pipeline(), features=["signal"]),
+            ModelConfig(model=_classifier_pipeline()),
             CVConfig(n_splits=4),
         )
 
@@ -152,7 +123,7 @@ def test_score_has_a_structured_non_printing_variant(
     result = run_cv(
         X,
         y,
-        ModelConfig(model=_classifier_pipeline(), features=["signal"]),
+        ModelConfig(model=_classifier_pipeline()),
         CVConfig(n_splits=4, random_state=11),
     )
 
